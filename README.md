@@ -17,6 +17,36 @@ Created by
 \
 This repository contains the full code for all experiments in the paper, including various configurations and flags. For a simpler version with minimal implementation to help you get started quickly, check out [**this repo**](https://github.com/FlyingGiraffe/dhn).
 
+## Installation
+
+### Option 1: Using Conda (Recommended)
+
+Create a conda environment with all dependencies:
+
+```bash
+conda env create -f environment.yml
+conda activate dhn
+```
+
+**Note:** Adjust the `pytorch-cuda` version in `environment.yml` based on your CUDA version (11.8 or 12.1). If you don't have CUDA, remove the `pytorch-cuda` line.
+
+### Option 2: Using pip
+
+1. First, install PyTorch based on your system:
+   - For CUDA 11.8: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`
+   - For CUDA 12.1: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
+   - For CPU only: `pip install torch torchvision torchaudio`
+
+2. Then install the remaining dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+**Requirements:**
+- Python 3.9+
+- PyTorch 2.0+ (required for `torch.func`, `torch.vmap`, and `SDPBackend` features)
+- CUDA support (optional but recommended for GPU acceleration)
+
 ## Data Preparation
 
 Download the data from [**Google Drive**](https://drive.google.com/file/d/1ry6Lz1Wa77UZmApEghfm9aSydXU2vWWr/view?usp=sharing) and upzip it to the folder `data` into the following format:
