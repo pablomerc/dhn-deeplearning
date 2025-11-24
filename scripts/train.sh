@@ -2,9 +2,9 @@
 # AutoRegression
 ##################################################
 
-#EXP_CLASS=ar
+EXP_CLASS=ar
 
-#EXP_NAME=sinpend_kernel2_stride1
+# EXP_NAME=sinpend_kernel2_stride1
 #EXP_NAME=sinpend_kernel4_stride2
 #EXP_NAME=sinpend_kernel8_stride4
 
@@ -21,6 +21,8 @@
 #EXP_NAME=doupend_baseline_vanilla_tf
 #EXP_NAME=doupend_baseline_vanilla_resnet_layer1
 #EXP_NAME=doupend_baseline_vanilla_resnet_layer2
+
+EXP_NAME=two_body_kernel2_stride1
 
 ##################################################
 # Representation Learning
@@ -59,6 +61,7 @@
 #EXP_NAME=doupend_4x
 #EXP_NAME=doupend_baseline_cnn_4x
 
+echo "Training started at: $(date)"
 
 RESULT_DIR=results/${EXP_CLASS}/${EXP_NAME}
 
@@ -68,3 +71,5 @@ python main.py \
 --config=configs/${EXP_CLASS}/${EXP_NAME}.py \
 --mode=train \
 --config.workdir=${RESULT_DIR}
+
+echo "Training finished at: $(date)"
