@@ -129,12 +129,15 @@ class Simulator(BaseSimulator):
     dtheta = traj['dq'][:, 1]
     M = self.m1 + self.m2
 
+    # Wrap theta to [0, 2π] for visualization (standard angular range)
+    theta_wrapped = theta % (2 * np.pi)
+
     ##################################################
     # Plot q-t curve (r and theta vs time)
     ##################################################
     plt.figure(figsize=(10, 6), dpi=100)
     plt.plot(traj['time'], r, label='r (radial distance)', color=self.color_palette[1])
-    plt.plot(traj['time'], theta, label='θ (angle)', color=self.color_palette[4])
+    plt.plot(traj['time'], theta_wrapped, label='θ (angle)', color=self.color_palette[4])
     plt.title(f'Positions vs Time, m1={self.m1:.2f}, m2={self.m2:.2f}, G={self.G:.2f}')
     plt.xlabel('Time [s]')
     plt.ylabel('Position [r: distance, θ: rad]')
@@ -164,7 +167,7 @@ class Simulator(BaseSimulator):
     ##################################################
     plt.figure(figsize=(10, 6))
     plt.plot(r, dr, label='r vs dr/dt', color=self.color_palette[1], alpha=0.7)
-    plt.plot(theta, dtheta, label='θ vs dθ/dt', color=self.color_palette[4], alpha=0.7)
+    plt.plot(theta_wrapped, dtheta, label='θ vs dθ/dt', color=self.color_palette[4], alpha=0.7)
     plt.title(f'Phase Space, m1={self.m1:.2f}, m2={self.m2:.2f}, G={self.G:.2f}')
     plt.xlabel('Position [r: distance, θ: rad]')
     plt.ylabel('Velocity [dr/dt: distance/s, dθ/dt: rad/s]')
