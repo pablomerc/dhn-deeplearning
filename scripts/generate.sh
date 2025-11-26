@@ -4,6 +4,7 @@
 
 EXP_CLASS=ar
 
+EXP_NAME=two_body_kernel2_stride1
 #EXP_NAME=sinpend_kernel2_stride1
 #EXP_NAME=sinpend_kernel4_stride2
 #EXP_NAME=sinpend_kernel8_stride4
@@ -27,8 +28,12 @@ RESULT_DIR=results/${EXP_CLASS}/${EXP_NAME}
 
 rm -rf ${RESULT_DIR}/gen_sequence
 
+echo "Generation started at: $(date)"
+
 python main.py \
 --config=configs/${EXP_CLASS}/${EXP_NAME}.py \
 --mode=generate \
 --config.workdir=${RESULT_DIR} \
 --config.data.batch_size=1000
+
+echo "Generation finished at: $(date)"
