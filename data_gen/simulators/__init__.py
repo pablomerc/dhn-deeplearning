@@ -9,6 +9,9 @@ def get_simulator(config):
   elif config.simulator == 'two_body':
     from .two_body import Simulator
 
+  elif config.simulator == 'three_body':
+    from .three_body import Simulator
+
   else:
     raise NotImplementedError('Simulator not implemented.')
 

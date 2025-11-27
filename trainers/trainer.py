@@ -7,6 +7,7 @@ import torch
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 
 from input_pipeline import create_dataloader
 from models_hamiltonian import get_model_hamiltoinian
@@ -42,23 +43,50 @@ class Trainer(object):
     # optimizer
     self.optimizer = optim.Adam(self.hamiltonian_net.parameters(), lr=self.lr, weight_decay=1e-4)
     self.scheduler = CosineAnnealingLR(self.optimizer, self.num_epochs, eta_min=self.lr)
-  
+
+    # Initialize wandb
+    # Extract experiment name from workdir (e.g., results/ar/two_body_baseline_hnn_tf -> two_body_baseline_hnn_tf)
+    exp_name = os.path.basename(self.workdir) if os.path.basename(self.workdir) else 'experiment'
+    wandb.init(
+      project='dhn-deeplearning',
+      name=exp_name,
+      config={
+        'num_epochs': self.num_epochs,
+        'lr': self.lr,
+        'batch_size': config.data.batch_size,
+        'workdir': self.workdir,
+        'model': config.model.hamiltonian,
+        'q_dim': config.model.q_dim,
+        'embedding_dim': config.model.embedding_dim,
+      },
+      dir=self.workdir,
+    )
+
   def preprocess_data(self, data):
     for k in data:
       if isinstance(data[k], torch.Tensor) and k != 'idx':
         data[k] = data[k].to(self.dtype).to(self.device)
     data['idx'] = data['idx'].to(torch.long).to(self.device)
     return data
-  
+
   def train_step(self):
+    dict_losses_all = []
     for data in self.train_loader:
       self.optimizer.zero_grad()
       data = self.preprocess_data(data)
       loss_train, dict_losses = self.hamiltonian_net.get_losses(data, self.config.loss)
       loss_train.backward()
       self.optimizer.step()
+      dict_losses_all.append(dict_losses)
     self.scheduler.step()
-    return dict_losses
+    # Average losses across all batches in the epoch
+    dict_losses_mean = {}
+    for k in dict_losses_all[0]:
+      # Detach tensors and convert to Python floats before averaging
+      values = [dict_losses[k].detach().cpu().item() if isinstance(dict_losses[k], torch.Tensor) else dict_losses[k]
+                for dict_losses in dict_losses_all]
+      dict_losses_mean[k] = np.mean(values)
+    return dict_losses_mean
 
   def eval_step(self):
     self.hamiltonian_net.eval()
@@ -83,24 +111,51 @@ class Trainer(object):
     for epoch in range(self.num_epochs + 1):
       self.hamiltonian_net.train()
       dict_losses = self.train_step()
+
+      # Log to tensorboard
       for k in dict_losses:
         writer.add_scalar(k, dict_losses[k], epoch)
-      
+
+      # Log to wandb (prefix train/ for training metrics)
+      wandb_log = {f'train/{k}': dict_losses[k] for k in dict_losses}
+      wandb_log['epoch'] = epoch
+      wandb_log['lr'] = self.scheduler.get_last_lr()[0]
+      wandb.log(wandb_log, step=epoch)
+
+      # Print training losses to console
+      loss_str = ', '.join([f'{k}: {dict_losses[k]:.6f}' for k in dict_losses])
+      print(f'Epoch {epoch}: {loss_str}, lr: {self.scheduler.get_last_lr()[0]:.6f}')
+
       if epoch % self.per_eval_epochs == 0:
         dict_losses_eval, dict_vis_eval = self.eval_step()
+
+        # Log eval metrics to tensorboard
         for k in dict_losses_eval:
           writer.add_scalar(k, dict_losses_eval[k], epoch)
+
+        # Log eval metrics to wandb (prefix eval/ for evaluation metrics)
+        wandb_log_eval = {f'eval/{k}': dict_losses_eval[k] for k in dict_losses_eval}
+        wandb_log_eval['epoch'] = epoch
+        wandb.log(wandb_log_eval, step=epoch)
+
+        # Log images to wandb
         for k in dict_vis_eval:
           image_tensor = dict_vis_eval[k]
           for i in range(min(self.num_vis, image_tensor.shape[0])):
+            # Tensorboard
             writer.add_image(k + f'/sample_{i}', image_tensor[i], epoch)
-      
+            # Wandb
+            wandb.log({f'images/{k}/sample_{i}': wandb.Image(image_tensor[i])}, step=epoch)
+
       if epoch % self.per_save_epochs == 0:
         self.save_checkpoint(epoch, is_tmp=False)
-      
+
       if epoch % self.per_save_tmp_epochs == 0:
         self.save_checkpoint(epoch, is_tmp=True)
-  
+
+    # Finish wandb run
+    wandb.finish()
+
   def save_checkpoint(self, epoch, is_tmp=False):
     checkpoint = {
       'epoch': epoch,
