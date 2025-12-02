@@ -10,7 +10,7 @@ from models_hamiltonian.baseline_vanilla import HamiltonianNet
 
 
 class HamiltonianNet(HamiltonianNet):
-  
+
   def get_gen_init(self, q, p, num_init_steps=None):
     q_pred = torch.zeros_like(q, dtype=self.dtype)
     p_pred = torch.zeros_like(p, dtype=self.dtype)
@@ -23,14 +23,14 @@ class HamiltonianNet(HamiltonianNet):
       q_pred[:, :num_init_steps] = q[:, :num_init_steps]
       p_pred[:, :num_init_steps] = p[:, :num_init_steps]
     return q_pred, p_pred, num_init_steps
-  
+
   def get_gen_gt(self, q, p, t):
     num_steps = t.shape[1]
     q_gt = q[:, :num_steps - 1:self.step_size]
     p_gt = p[:, :num_steps - 1:self.step_size]
     t = t[:, :num_steps - 1:self.step_size]
     return q_gt, p_gt, t
-  
+
   def gen_sequence(self, q, p, z, num_init_steps=None):
     q_pred, p_pred, num_init_steps = self.get_gen_init(q, p, num_init_steps)
     batch_size, num_steps, q_dim = q.shape
@@ -41,13 +41,13 @@ class HamiltonianNet(HamiltonianNet):
       q_tgt_pred, p_tgt_pred = self.compute_state_updates(q_src, p_src, z)
       q_pred[:, i_step + 1] = q_tgt_pred
       p_pred[:, i_step + 1] = p_tgt_pred
-      
+
       if num_init_steps is not None:
         q_pred[:, :num_init_steps] = q[:, :num_init_steps]
         p_pred[:, :num_init_steps] = p[:, :num_init_steps]
-    
+
     return q_pred, p_pred
-  
+
   def get_vis_dict(self, dict_vals, num_vis=None):
     t = dict_vals['t']
     q_gt = dict_vals['q_gt']
@@ -65,7 +65,7 @@ class HamiltonianNet(HamiltonianNet):
       'traj_p': traj_p_vis,
     }
     return dict_vis
-  
+
   def inference(self, data):
     q, p = self.get_input_coords(data)
     t = self.normalize_time(data['time'])
@@ -84,7 +84,7 @@ class HamiltonianNet(HamiltonianNet):
     }
 
     return dict_losses, dict_vals
-  
+
   def gen_results_for_eval(self, data, gen_config):
     num_init_steps = gen_config.num_init_steps
 
@@ -103,15 +103,15 @@ class HamiltonianNet(HamiltonianNet):
     }
 
     return dict_results
-  
+
   def extract_get_losses(self, data, loss_config):
     loss_train, dict_losses = super(HamiltonianNet, self).get_losses(data, loss_config)
     return loss_train, dict_losses
-  
+
   def extract_get_vis_dict(self, dict_vals, num_vis=None):
     dict_vis = self.get_vis_dict(dict_vals, num_vis=num_vis)
     return dict_vis
-  
+
   def extract_inference(self, data):
     dict_losses, dict_vals = self.inference(data)
     return dict_losses, dict_vals

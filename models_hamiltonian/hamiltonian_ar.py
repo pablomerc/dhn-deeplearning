@@ -10,7 +10,7 @@ from models_hamiltonian.hamiltonian import HamiltonianNet
 
 
 class HamiltonianNet(HamiltonianNet):
-  
+
   def get_train_stage_masks(self, q_block, i_stage):
     block_size = self.stage_block_size[i_stage]
     block_step = self.stage_block_step[i_stage]
@@ -24,7 +24,7 @@ class HamiltonianNet(HamiltonianNet):
     q_tgt_mask[:, :, block_size - block_step:] = 0
 
     return q_src_mask, p_src_mask, q_tgt_mask, p_tgt_mask
-  
+
   def get_gen_init(self, q, p, num_init_steps=None):
     q_pred = torch.zeros_like(q, dtype=self.dtype)
     p_pred = torch.zeros_like(p, dtype=self.dtype)
@@ -39,19 +39,19 @@ class HamiltonianNet(HamiltonianNet):
     state_mask = torch.zeros_like(q)
     state_mask[:, :self.stage_block_size[0]] = 1
     return q_pred, p_pred, state_mask, num_init_steps
-  
+
   def get_gen_gt(self, q, p, t):
     num_steps = t.shape[1]
     q_gt = q[:, :num_steps - 1:self.stage_step_size[-1]]
     p_gt = p[:, :num_steps - 1:self.stage_step_size[-1]]
     t = t[:, :num_steps - 1:self.stage_step_size[-1]]
     return q_gt, p_gt, t
-  
+
   def gen_sequence(
     self, q, p, z, num_init_steps=None, num_denoise_steps=1, update_step_size=None
   ):
     q_pred, p_pred, state_mask, num_init_steps = self.get_gen_init(q, p, num_init_steps)
-    batch_size, num_steps, q_dim = q.shape    
+    batch_size, num_steps, q_dim = q.shape
 
     i_stage = 0
     block_size = self.stage_block_size[i_stage]
@@ -100,9 +100,9 @@ class HamiltonianNet(HamiltonianNet):
           add_noise=True,
           noise_scale=noise_scale,
         )
-      
+
       update_step_size = block_step if update_step_size is None else update_step_size
-      
+
       idx_seq = torch.arange(1, update_step_size + 1, dtype=torch.int64) + idx_src[-1]
       idx_pred = torch.arange(0, update_step_size, dtype=torch.int64) + block_size - block_step
       q_pred[:, idx_seq] = q_tgt_pred[:, 0, idx_pred]
@@ -113,9 +113,9 @@ class HamiltonianNet(HamiltonianNet):
       if num_init_steps is not None:
         q_pred[:, :num_init_steps] = q[:, :num_init_steps]
         p_pred[:, :num_init_steps] = p[:, :num_init_steps]
-    
+
     return q_pred, p_pred
-  
+
   def get_vis_dict(self, dict_vals, num_vis=None):
     t = dict_vals['t']
     q_gt = dict_vals['q_gt']
@@ -136,9 +136,9 @@ class HamiltonianNet(HamiltonianNet):
       'traj_q': traj_q_vis,
       'traj_p': traj_p_vis,
     }
-    
+
     return dict_vis
-  
+
   def inference(self, data):
     q, p = self.get_input_coords(data)
     t = self.normalize_time(data['time'])
@@ -151,7 +151,7 @@ class HamiltonianNet(HamiltonianNet):
     for num_denoise_steps in num_denoise_steps_list:
       q_pred_list[str(num_denoise_steps)], p_pred_list[str(num_denoise_steps)] = self.gen_sequence(
         q_gt, p_gt, z, num_denoise_steps=num_denoise_steps)
-    
+
     dict_losses = {}
     for num_denoise_steps in num_denoise_steps_list:
       dict_losses[f'loss_eval/q_{num_denoise_steps}'] = F.mse_loss(q_pred_list[str(num_denoise_steps)], q_gt).item()
@@ -167,7 +167,7 @@ class HamiltonianNet(HamiltonianNet):
       dict_vals[f'p_pred_{num_denoise_steps}'] = p_pred_list[str(num_denoise_steps)]
 
     return dict_losses, dict_vals
-  
+
   def gen_results_for_eval(self, data, gen_config):
     num_init_steps = gen_config.num_init_steps
     num_denoise_steps = gen_config.num_denoise_steps
@@ -193,15 +193,15 @@ class HamiltonianNet(HamiltonianNet):
     }
 
     return dict_results
-  
+
   def extract_get_losses(self, data, loss_config):
     loss_train, dict_losses = super(HamiltonianNet, self).get_losses(data, loss_config)
     return loss_train, dict_losses
-  
+
   def extract_get_vis_dict(self, dict_vals, num_vis=None):
     dict_vis = self.get_vis_dict(dict_vals, num_vis=num_vis)
     return dict_vis
-  
+
   def extract_inference(self, data):
     dict_losses, dict_vals = self.inference(data)
     return dict_losses, dict_vals

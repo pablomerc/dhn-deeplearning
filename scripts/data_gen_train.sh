@@ -1,5 +1,7 @@
-DATA_NAME=single_pendulum
+# DATA_NAME=single_pendulum
 #DATA_NAME=double_pendulum
+# DATA_NAME=two_body
+DATA_NAME=three_body
 
 SAVE_DIR=data/${DATA_NAME}/train
 
