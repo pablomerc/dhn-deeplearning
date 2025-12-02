@@ -26,10 +26,10 @@ EXP_NAME=two_body_kernel2_stride1
 
 # Array of experiment names to run
 EXPERIMENTS=(
-    # "two_body_baseline_hnn_tf"
-    # "two_body_kernel2_stride1"
-    # "two_body_kernel4_stride2"
-    # "two_body_kernel8_stride4"
+    "two_body_baseline_hnn_tf"
+    "two_body_kernel2_stride1"
+    "two_body_kernel4_stride2"
+    "two_body_kernel8_stride4"
     "two_body_baseline_vanilla_tf"
     "two_body_baseline_resnet_layer1"
     "two_body_baseline_resnet_layer2"
@@ -39,7 +39,7 @@ echo "Training started at: $(date)"
 echo "Running ${#EXPERIMENTS[@]} experiments"
 
 
-
+#new: dataset_split=test, work_subdir=gen_sequence_test, rm -rf ${RESULT_DIR}/gen_sequence_test (added _test)
 # Loop over all experiments
 for EXP_NAME in "${EXPERIMENTS[@]}"; do
     echo ""
@@ -49,13 +49,15 @@ for EXP_NAME in "${EXPERIMENTS[@]}"; do
 
     RESULT_DIR=results/${EXP_CLASS}/${EXP_NAME}
 
-    rm -rf ${RESULT_DIR}/gen_sequence
+    rm -rf ${RESULT_DIR}/gen_sequence_test
 
     echo "Generation started at: $(date)"
 
     python main.py \
     --config=configs/${EXP_CLASS}/${EXP_NAME}.py \
     --mode=generate \
+    --dataset_split=test \
+    --work_subdir=gen_sequence_test \
     --config.workdir=${RESULT_DIR} \
     --config.data.batch_size=1000
 
