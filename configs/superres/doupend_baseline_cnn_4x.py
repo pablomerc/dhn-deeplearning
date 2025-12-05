@@ -1,5 +1,5 @@
-"""Representation Learning, Double Pendulum.
-Baseline: Vanilla NN.
+"""Super-Resolution (Trajectory Interpolation), Double Pendulum.
+Baseline: CNN-based interpolation.
 """
 
 import ml_collections

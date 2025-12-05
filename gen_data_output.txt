@@ -1,0 +1,2 @@
+single_pendulum train: 1000 trajectories
+single_pendulum test: 200 trajectories

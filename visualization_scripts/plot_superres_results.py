@@ -179,6 +179,22 @@ def print_results_table(results, scale_factor=100):
     print("="*70 + "\n")
 
 
+def save_results_json(results, save_path='superres_results.json'):
+    """Save results to JSON for later analysis."""
+    import json
+    
+    # Convert to serializable format
+    serializable = {}
+    for system, data in results.items():
+        serializable[system] = {k: float(v) if v is not None else None 
+                                for k, v in data.items()}
+    
+    with open(save_path, 'w') as f:
+        json.dump(serializable, f, indent=2)
+    
+    print(f"Results saved to: {save_path}")
+
+
 def main():
     """Main function to generate visualization."""
     import argparse
@@ -190,6 +206,8 @@ def main():
                         help='Output path for the figure')
     parser.add_argument('--scale', type=int, default=100,
                         help='Scale factor for MSE (default: 100)')
+    parser.add_argument('--save_json', action='store_true',
+                        help='Also save results to JSON')
     
     args = parser.parse_args()
     
@@ -198,6 +216,10 @@ def main():
     
     print_results_table(results, args.scale)
     plot_figure14_style(results, args.output, args.scale)
+    
+    if args.save_json:
+        json_path = args.output.replace('.png', '.json')
+        save_results_json(results, json_path)
 
 
 if __name__ == '__main__':

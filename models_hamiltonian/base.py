@@ -56,11 +56,13 @@ class BaseHamiltonianNet(nn.Module):
     raise NotImplementedError
   
   def plot_traj_image(self, q_dict, t):
+    import io
     t = t.detach().cpu().numpy()
 
     colors = ['#6A5B6E', '#E6B89C', '#EAD2AC', '#4281A4', '#9CAFB7']
 
-    fig, ax = plt.subplots()
+    # Use fixed figure size for consistent image dimensions
+    fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
     for i, k in enumerate(q_dict):
       q = q_dict[k].squeeze(-1).detach().cpu().numpy()
       ax.plot(t, q, linewidth=3, color=colors[i], label=k)
@@ -69,12 +71,24 @@ class BaseHamiltonianNet(nn.Module):
     ax.set_ylabel('q')
     ax.legend()
 
-    fig.canvas.draw()
-    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # Use buffer approach for compatibility with newer matplotlib
+    # Do NOT use bbox_inches='tight' - it causes variable image sizes
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100)
+    buf.seek(0)
+    
+    from PIL import Image
+    image = Image.open(buf)
+    image = np.array(image)
+    
+    # Handle RGBA -> RGB if needed
+    if image.shape[-1] == 4:
+      image = image[:, :, :3]
+    
     image_tensor = torch.tensor(image).permute(2, 0, 1)
 
     plt.close()
+    buf.close()
     return image_tensor
   
   def get_traj_image_vis(self, q_dict, t, num_vis=None):

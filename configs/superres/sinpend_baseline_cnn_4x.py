@@ -1,5 +1,5 @@
-"""Representation Learning, Single Pendulum.
-Baseline: Vanilla NN.
+"""Super-Resolution (Trajectory Interpolation), Single Pendulum.
+Baseline: CNN-based interpolation.
 """
 
 import ml_collections

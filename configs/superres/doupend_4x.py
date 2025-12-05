@@ -1,4 +1,4 @@
-"""Representation Learning, Double Pendulum.
+"""Super-Resolution (Trajectory Interpolation), Double Pendulum.
 """
 
 import ml_collections
