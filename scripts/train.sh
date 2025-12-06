@@ -64,12 +64,12 @@ EXP_CLASS=ar
 # Array of experiment names to run
 EXPERIMENTS=(
     # "two_body_baseline_hnn_tf"
-    # "two_body_kernel4_stride2"
-    # "two_body_kernel8_stride4"
+    "two_body_kernel4_stride2"
+    "two_body_kernel8_stride4"
     "two_body_baseline_vanilla_tf"
     # "two_body_baseline_resnet_layer1"
     # "two_body_baseline_resnet_layer2"
-    # "two_body_kernel2_stride1"
+    "two_body_kernel2_stride1"
 )
 
 echo "Training started at: $(date)"
