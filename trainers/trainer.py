@@ -91,19 +91,35 @@ class Trainer(object):
   def eval_step(self):
     self.hamiltonian_net.eval()
     with torch.no_grad():
-      dict_losses_all = []
+      # Evaluate on training set
+      dict_losses_train_all = []
       for i, data in enumerate(self.train_loader):
         if i >= self.num_eval_batches:
           break
         data = self.preprocess_data(data)
         dict_losses, dict_vals = self.hamiltonian_net.inference(data)
-        dict_losses_all.append(dict_losses)
+        dict_losses_train_all.append(dict_losses)
         if i == 0:
-          dict_vis = self.hamiltonian_net.get_vis_dict(dict_vals, num_vis=self.num_vis)
-      dict_losses_mean = {}
-      for k in dict_losses_all[0]:
-        dict_losses_mean[k] = np.mean([dict_losses[k] for dict_losses in dict_losses_all])
-      return dict_losses_mean, dict_vis
+          dict_vis_train = self.hamiltonian_net.get_vis_dict(dict_vals, num_vis=self.num_vis)
+      dict_losses_train_mean = {}
+      for k in dict_losses_train_all[0]:
+        dict_losses_train_mean[k] = np.mean([dict_losses[k] for dict_losses in dict_losses_train_all])
+
+      # Evaluate on test set
+      dict_losses_test_all = []
+      for i, data in enumerate(self.test_loader):
+        if i >= self.num_eval_batches:
+          break
+        data = self.preprocess_data(data)
+        dict_losses, dict_vals = self.hamiltonian_net.inference(data)
+        dict_losses_test_all.append(dict_losses)
+        if i == 0:
+          dict_vis_test = self.hamiltonian_net.get_vis_dict(dict_vals, num_vis=self.num_vis)
+      dict_losses_test_mean = {}
+      for k in dict_losses_test_all[0]:
+        dict_losses_test_mean[k] = np.mean([dict_losses[k] for dict_losses in dict_losses_test_all])
+
+      return dict_losses_train_mean, dict_losses_test_mean, dict_vis_train, dict_vis_test
 
   def train_and_eval(self):
     writer = SummaryWriter(self.workdir)
@@ -127,20 +143,28 @@ class Trainer(object):
       print(f'Epoch {epoch}: {loss_str}, lr: {self.scheduler.get_last_lr()[0]:.6f}')
 
       if epoch % self.per_eval_epochs == 0:
-        dict_losses_eval, dict_vis_eval = self.eval_step()
+        dict_losses_eval_train, dict_losses_eval_test, dict_vis_train, dict_vis_test = self.eval_step()
 
-        # Log eval metrics to tensorboard
-        for k in dict_losses_eval:
-          writer.add_scalar(k, dict_losses_eval[k], epoch)
+        # Log eval metrics on training set to tensorboard
+        for k in dict_losses_eval_train:
+          writer.add_scalar(f'eval_train/{k}', dict_losses_eval_train[k], epoch)
 
-        # Log eval metrics to wandb (prefix eval/ for evaluation metrics)
-        wandb_log_eval = {f'eval/{k}': dict_losses_eval[k] for k in dict_losses_eval}
+        # Log eval metrics on test set to tensorboard
+        for k in dict_losses_eval_test:
+          writer.add_scalar(f'eval_test/{k}', dict_losses_eval_test[k], epoch)
+
+        # Log eval metrics to wandb (prefix eval_train/ and eval_test/)
+        wandb_log_eval = {}
+        for k in dict_losses_eval_train:
+          wandb_log_eval[f'eval_train/{k}'] = dict_losses_eval_train[k]
+        for k in dict_losses_eval_test:
+          wandb_log_eval[f'eval_test/{k}'] = dict_losses_eval_test[k]
         wandb_log_eval['epoch'] = epoch
         wandb.log(wandb_log_eval, step=epoch)
 
-        # Log images to wandb
-        for k in dict_vis_eval:
-          image_tensor = dict_vis_eval[k]
+        # Log images to wandb (from test set)
+        for k in dict_vis_test:
+          image_tensor = dict_vis_test[k]
           for i in range(min(self.num_vis, image_tensor.shape[0])):
             # Tensorboard
             writer.add_image(k + f'/sample_{i}', image_tensor[i], epoch)
