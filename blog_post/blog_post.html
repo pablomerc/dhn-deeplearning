@@ -56,7 +56,20 @@
 			height: auto;
 			display: block;
 			margin: auto;
-	}
+		}
+	.animation-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+			margin: 20px 0;
+		}
+	.animation-item {
+			text-align: center;
+		}
+	.animation-item img {
+			max-width: 100%;
+			height: auto;
+		}
 	.my-video {
 			max-width: 100%; /* Make sure it fits inside the container */
 			height: auto;
@@ -83,6 +96,12 @@
 		font-size: 18px;
 		margin-top: 4px;
 		margin-bottom: 10px;
+	}
+
+	h2 {
+		font-size: 16px;
+		margin-top: 8px;
+		margin-bottom: 8px;
 	}
 
 	table.header {
@@ -197,7 +216,7 @@
 						<table class="header" align=left>
 								<tr>
 									<td colspan=4>
-										<span style="font-size: 32px; font-family: 'Courier New', Courier, monospace; /* Adds fallbacks */">A Grand Unified Theory of Deep Learning</span>
+										<span style="font-size: 32px; font-family: 'Courier New', Courier, monospace; /* Adds fallbacks */">Learning Orbital Dynamics with Denoising Hamiltonian Neural Networks</span>
 									</td>
 								</tr>
 								<tr>
@@ -226,12 +245,13 @@
               <b style="font-size:16px">Outline</b><br><br>
               <a href="#intro">Introduction</a><br><br>
               <a href="#does_x_do_y">Does X do Y?</a><br><br>
+              <a href="#evaluation">Evaluation</a><br><br>
               <a href="#implications_and_limitations">Implications and limitations</a><br><br>
           </div>
 				</div>
 		    <div class="main-content-block">
             <!--You can embed an image like this:-->
-            <img src="./images/your_image_here.png" width=512px/>
+            <img src="./misc/mateusz.jpg" width=512px/>
 		    </div>
 		    <div class="margin-right-block">
 						Caption for the image.
@@ -284,7 +304,80 @@
           rendering equations on webpages.
 		    </div>
 		    <div class="margin-right-block" style="transform: translate(0%, -100%);"> <!-- you can move the margin notes up and down with translate -->
-          Interestingly, Plato also asked if X does Y, in <a href="#ref_1">[1]</a>.
+          Interestingly, Plato also asked if X does Y.
+		    </div>
+		</div>
+
+		<div class="content-margin-container" id="evaluation">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+            <h1>Evaluation</h1>
+
+            <h2>Trajectory Completion:</h2>
+            <p>
+              We compare the performance of the Denoising Hamiltonian Network (DHN) model against a few baselines, following [cite paper].
+            </p>
+            <p>
+              The first baseline is a traditional Hamiltonian neural network. This baseline uses a single network that predicts the Hamiltonian H_θ and calculates the next step from the current state using the gradients of the Hamiltonian. This baseline has only one loss term, based on the error in the predicted position and momentum (as opposed to the DHN, which has that term plus a denoising term).
+            </p>
+            <p>
+              Two integration schemes are used: forward Euler, which performs the update in one step using gradients evaluated at the current state (first-order method), and leapfrog, which performs the update in three half-steps. The leapfrog method first does a half-step update on momentum, then recalculates the gradients of the Hamiltonian at the intermediate state, updates position by a half-step, and then does a second half-step update on momentum. It is thus a second-order symplectic scheme.
+            </p>
+            <p>
+              We also compare against a transformer and a ResNet that consists of a fully connected network with residual connections [cite kaiming]. Both the transformer and the ResNet are trained to directly predict the position and momentum at the next time step based on the current timestep and the trajectory embedding from the codebook (the transformer uses self-attention amongst these). The trajectory embedding z is shared across all timesteps within a trajectory, allowing the models to condition on trajectory-specific properties. For the ResNet, we try 1 or 2 residual blocks to assess the effect of network depth.
+            </p>
+            <p>
+              For the DHN, we evaluate three different kernel sizes (2, 4, and 8), setting the stride to half the kernel size in each case.
+            </p>
+            <p>
+              We DHN's performance on trajectory completion via autoregression by testing on 1,000 trajectories. The model sees the first 8 time steps, and they are used to optimize the per-trajectory global latent codes (but the weights of the model remain frozen). Then, the model tries to predict the following 120 time steps.
+            </p>
+            <p>
+              <img src="./AR_figures/q-error-hnn.png" alt="Autoregressive Trajectory Completion comparison"/>
+            </p>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Autoregressive Trajectory Completion:</b> comparison between the DHN method and an HNN baseline. Showing the average error on the predicted relative distance and angle as a function of time step. All models are trained for 200 epochs unless otherwise noted.
+            </p>
+            <p>
+              We see that the DHN method outperforms the traditional HNN method for the two body problem. We find a kernel size of 2 and a stride of 1 to be the most optimal. Surprisingly, this simplest approach yields the best results. Since kernel size 2 and stride 1 seems to be the most promising, we try training for longer, for a total of 400 epochs. We look at the training loss curves to investigate this issue. Extending training to 400 epochs does not seem to further improve performance. The training loss remains approximately constant after epoch 200 and exhibits a transient spike near epoch 300, after which training recovers. However, neither the distance nor angle error improves with longer training, suggesting diminishing returns beyond 200 epochs for this configuration.
+            </p>
+            <p>
+              We do not report a conventional validation loss because it is not informative for our setting.
+            </p>
+            <p>
+              During training, DHN is optimized using block-wise denoising and motion updates over short temporal windows, whereas at test time the model is evaluated through long-horizon autoregressive rollout after optimizing a per-trajectory latent code. In this regime, short-horizon prediction error is a poor proxy for downstream performance: models with similar training loss can exhibit dramatically different long-term behavior due to error accumulation and energy drift. Consequently, validation loss computed under the training objective does not reliably correlate with the metrics of interest.
+            </p>
+            <p>
+              <img src="./AR_figures/loss.png" alt="Training loss curves"/>
+            </p>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Training loss curves</b> for the model with different kernel sizes.
+            </p>
+            <p>
+              We compare the error in distance and angle against the baseline transformer model and the baseline ResNet model. We find that the Transformer performs well at predicting the radial distance r but exhibits large errors in the angular coordinate θ, whereas the ResNet performs well in both.
+            </p>
+            <p>
+              This differs from the results reported in [cite paper], where DHN outperformed a ResNet baseline. In our case, the ResNet baseline slightly outperforms DHN on this particular metric. But the difference is small for the best DHN configuration (the kernel size 2 and stride 1).
+            </p>
+            <p>
+              <img src="./AR_figures/q-error-resnet.png" alt="Autoregressive Trajectory Completion comparison with Transformer and ResNet"/>
+            </p>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Autoregressive Trajectory Completion:</b> comparison between the DHN method and Transformer and ResNet baselines. Showing the average error on the predicted relative distance and angle as a function of time step. All models are trained for 200 epochs unless otherwise noted.
+            </p>
+            <p>
+              Next, we will evaluate the model performance by looking at the energy that corresponds to the predicted position and momentum. We know that for this system, the energy should remain constant because we haven't introduced any source of energy dissipation.
+            </p>
+            <p>
+              <img src="./AR_figures/energy-hnn.png" alt="Predicted Energy comparison with HNN"/>
+              <img src="./AR_figures/energy-resnet.png" alt="Predicted Energy comparison with Transformer and ResNet"/>
+            </p>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Predicted Energy.</b> First two rows: comparison between the DHN method and an HNN baseline. Second two rows: Comparison between the DHN method, a Transformer baseline, and a ResNet baseline.
+            </p>
+		    </div>
+		    <div class="margin-right-block">
 		    </div>
 		</div>
 
@@ -292,14 +385,49 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-            <h1>Another section</h1>
-            In this section we embed a video:
-						<video class='my-video' loop autoplay muted style="width: 725px">
-								<source src="./images/mtsh.mp4" type="video/mp4">
-						</video>
+            <p>
+              We see that the HNN method and the Transformer struggle significantly, with unstable predictions in the total energy, which we know should remain constant. The DHN configuration with block size 2 and stride 1 performs best among the tested variants. The ResNet baseline produces predictions of similar quality or perhaps slightly better than the DHN method in energy.
+            </p>
 		    </div>
 		    <div class="margin-right-block">
-					A caption for the video could go here.
+              We exclude the configuration with block size 8 and stride 4 from this analysis because it exhibits severe energy instability, with total energy diverging well outside the range observed for other models, making a direct comparison uninformative.
+		    </div>
+		</div>
+
+		<div class="content-margin-container">
+				<div class="margin-left-block">
+				</div>
+		    <div class="main-content-block">
+            <p>
+              Finally, we convert the predicted relative polar coordinates (r, θ) back to Cartesian (x, y) space and visually inspect the reconstructed trajectories. We qualitatively compare trajectory animations produced by DHN, HNN, and ResNet baselines.
+            </p>
+            <div class="animation-grid">
+              <div class="animation-item">
+                <img src="./AR_animations/animation-dhn.gif" alt="DHN trajectory animation"/>
+              </div>
+              <div class="animation-item">
+                <img src="./AR_animations/animation-hnn.gif" alt="HNN trajectory animation"/>
+              </div>
+              <div class="animation-item">
+                <img src="./AR_animations/animation-resnet1.gif" alt="ResNet Layer 1 trajectory animation"/>
+              </div>
+              <div class="animation-item">
+                <img src="./AR_animations/animation-resnet2.gif" alt="ResNet Layer 2 trajectory animation"/>
+              </div>
+            </div>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Reconstructed Trajectories:</b> animations of reconstructed trajectories predicted by different models (DHN, HNN, ResNet Layer 1, and ResNet Layer 2).
+            </p>
+            <p>
+              From this visual inspection, DHN produces trajectories that appear smooth, stable, and consistent with the expected orbital dynamics, whereas HNN predictions exhibit noticeable drift and distortion over long time scales. Among the ResNet baselines, the two-layer ResNet produces more coherent trajectories than the single-layer variant.
+            </p>
+            <p>
+              Overall, this qualitative benchmark suggests that DHN produces the most physically consistent long-term trajectories, with the two-layer ResNet performing comparably but visually less stable. While DHN consistently outperforms HNN on this task, its advantage over the ResNet baseline depends on the evaluation metric considered. This highlights the importance of carefully defining evaluation metrics for physics-informed models: quantitative error metrics alone may not fully capture long-term physical plausibility. We discuss more on this challenge and possible directions for improved evaluation in the following section.
+            </p>
+
+            <h2>Superresolution</h2>
+		    </div>
+		    <div class="margin-right-block">
 		    </div>
 		</div>
 
@@ -320,8 +448,7 @@
 		    <div class="main-content-block">
 						<div class='citation' id="references" style="height:auto"><br>
 							<span style="font-size:16px">References:</span><br><br>
-							<a id="ref_1"></a>[1] <a href="https://en.wikipedia.org/wiki/Allegory_of_the_cave">Allegory of the Cave</a>, Plato, c. 375 BC<br><br>
-							<a id="ref_2"></a>[2] <a href="">A Human-Level AGI</a>, OpenAI, 2025<br><br>
+							<a id="ref_1"></a>[1] <a href="https://arxiv.org/abs/2503.07596">Denoising Hamiltonian Network for Physical Reasoning</a>, Congyue Deng, Brandon Y. Feng, Cecilia Garraffo, Alan Garbarz, Robin Walters, William T. Freeman, Leonidas Guibas, Kaiming He, arXiv:2503.07596, 2025<br><br>
 						</div>
 		    </div>
 		    <div class="margin-right-block">
