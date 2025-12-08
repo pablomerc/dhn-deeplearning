@@ -64,7 +64,7 @@ def get_config():
   loss.crop_interval = (0, -1)
 
   config.optim = optim = ml_collections.ConfigDict()
-  optim.num_epochs = 5
+  optim.num_epochs = 200
   optim.lr = 1e-4
 
   config.logging = logging = ml_collections.ConfigDict()
