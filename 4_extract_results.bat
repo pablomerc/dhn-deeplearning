@@ -7,3 +7,5 @@ python run_full_superres_experiment.py --phase extract --extract_epochs 1000
 echo.
 echo Extraction complete!
 pause
+
+

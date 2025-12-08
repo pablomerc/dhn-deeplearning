@@ -7,3 +7,5 @@ python run_full_superres_experiment.py --phase train --train_epochs 200
 echo.
 echo Training complete!
 pause
+
+

@@ -6,3 +6,5 @@ python run_full_superres_experiment.py --phase plot
 echo.
 echo Plots saved to visualization_scripts/
 pause
+
+

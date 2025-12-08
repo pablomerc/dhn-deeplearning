@@ -7,3 +7,5 @@ python run_full_superres_experiment.py --phase data
 echo.
 echo Data generation complete!
 pause
+
+
