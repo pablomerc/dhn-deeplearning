@@ -202,8 +202,8 @@
 
 </style>
 
-	  <title>The Platonic Representation Hypothesis</title>
-      <meta property="og:title" content="The Platonic Representation Hypothesis" />
+	  <title>Denoising Hamiltonian Neural Networks</title>
+      <meta property="og:title" content="Denoising Hamiltonian Neural Networks" />
 			<meta charset="UTF-8">
   </head>
 
@@ -244,17 +244,17 @@
           <div style="position:fixed; max-width:inherit; top:max(20%,120px)">
               <b style="font-size:16px">Outline</b><br><br>
               <a href="#intro">Introduction</a><br><br>
-              <a href="#does_x_do_y">Does X do Y?</a><br><br>
+              <a href="#background">Background</a><br><br>
               <a href="#evaluation">Evaluation</a><br><br>
-              <a href="#implications_and_limitations">Implications and limitations</a><br><br>
+              <a href="#conclusion">Conclusion</a><br><br>
+              <a href="#appendix">Appendix</a><br><br>
           </div>
 				</div>
 		    <div class="main-content-block">
-            <!--You can embed an image like this:-->
-            <img src="./misc/mateusz.jpg" width=512px/>
+            <img src="./AR_animations/animation-dhn.gif" alt="DHN ground truth vs prediction animation"/>
 		    </div>
 		    <div class="margin-right-block">
-						Caption for the image.
+						DHN trajectory prediction compared to ground truth for the two-body problem.
 		    </div>
 		</div>
 
@@ -263,50 +263,151 @@
 				</div>
 		    <div class="main-content-block">
 						<h1>Introduction</h1>
-            Motivate your project. What question are you asking. Why is it unanswered so far? What gap in the literature or practice are you filling?
-            Why is it important?
+            <p>
+              Physics-informed neural networks (PINNs) integrate physical laws into machine-learning models, allowing them to produce accurate and physically consistent solutions to complex forward and inverse problems described by differential equations. These machine learning frameworks aim to capture not only short-term dynamics but also the long-term physical constraints that govern the evolution of these systems. Traditional physically informed neural networks address this objective by embedding Hamiltonian operators, symplectic structures, or other physical priors directly into their architectures. However, most existing formulations capture only local interactions by constraining relationships between adjacent time steps, which prevents them from preserving conservation laws in the long term. Furthermore, they are typically only designed for next-step prediction, making them less suitable for other physical reasoning tasks such as state reconstruction and interpolation for superresolution.
+            </p>
+            <p>
+              The introduction of the Denoising Hamiltonian Neural Network (DHN) <a href="#ref_1">[1]</a> addresses these limitations through three key architectural features:
+            </p>
+            <p>
+              <b>1.</b> The DHN adopts a transformer architecture and treats the system states as tokens, which allows the system to capture relationships between the non-adjacent states. Better capturing less localized properties of the system, such as the energy encapsulated in the Hamiltonian.
+            </p>
+            <p>
+              <b>2.</b> The DHN inferences through diffusion, initializing the predicted state as Gaussian noise and denoising it step-by-step to reconstruct it. This feature forces the model to self-correct numerical errors, which could also be modeled as Gaussian. This is specifically important in repeated autoregressive state reconstruction, where errors compound with the number of steps taken in the simulation. This approach enhances the stability of autoregressive prediction and keeps the long-term simulation on the trajectory that preserves conservation laws.
+            </p>
+            <p>
+              <b>3.</b> In addition to the transformer architecture, the model includes a latent vector that is trained separately for each simulation setting, allowing the network to capture the specific physical parameters associated with the simulation, such as the masses of the objects involved.
+            </p>
+            <p>
+              This approach has been shown to improve the accuracy in autoregressive, interpolating, and randomized state reconstruction for a single pendulum problem. Here, we extend this framework to a more complex dynamical system: the two-body problem.
+            </p>
 		    </div>
 		    <div class="margin-right-block">
-						Margin note that clarifies some detail #main-content-block for intro section.
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="does_x_do_y">
+		<div class="content-margin-container" id="background">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-					<h1>Does X do Y?</h1>
-				  It is well known that Y does Y. And this has raised the question does X do Y? Because if Y does Y then it stands to reason that X does Y.
-          But we cannot answer this until we realize the Z implies Y and X can be linked to Z.<br><br>
+						<h1>Background</h1>
 
-          Now let's write some math!<br>
-          <center>
-            <math xmlns="http://www.w3.org/1998/Math/MathML">
-              <mrow>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>y</mi>
-                </mrow>
-                <mo>/</mo>
-                <mrow>
-                  <mo>&#x2202;</mo>
-                  <mi>x</mi>
-                </mrow>
-              </mrow>
-              <mo>=</mo>
-              <mi>x</mi>
-            </math>
-          </center>
-          <br>
-          It's probably best to ask an LLM to help do the web
-          formatting for math. You can tell it "convert this latex equation into MathML: $$\frac{\partial dy}{\partial dx} = x$$"
-          But it took me a few tries. So, if you get frustrated, you can embed an image of the equation, or use other packages for
-          rendering equations on webpages.
+						<h2>Two-Body Problem</h2>
+						<p>
+							[Two-body problem content placeholder]
+						</p>
+
+					<h2>Two-Body Simulator</h2>
+					<p>
+						To generate training data, we implemented a two-body problem simulator based directly on the radial and angular equations of motion derived in the <a href="#appendix">appendix</a>. Each trajectory evolves the state (r, θ, ṙ, θ̇) by integrating
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>r</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mfrac>
+								<mrow>
+									<mi>G</mi>
+									<mo>(</mo>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+									<mo>)</mo>
+								</mrow>
+								<msup><mi>r</mi><mn>2</mn></msup>
+							</mfrac>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>θ</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mo>-</mo>
+							<mfrac>
+								<mrow>
+									<mn>2</mn>
+									<mover><mi>r</mi><mo>˙</mo></mover>
+									<mover><mi>θ</mi><mo>˙</mo></mover>
+								</mrow>
+								<mi>r</mi>
+							</mfrac>
+						</math>
+					</p>
+					<p>
+						using scipy.solve_ivp. By default, this uses an adaptive Runge–Kutta integrator (Dormand–Prince 4(5)), which provides accurate solutions with automatic step-size control.
+					</p>
+					<p>
+						For each simulation, we sample the masses as
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>m</mi><mn>1</mn></msub>
+							<mo>,</mo>
+							<msub><mi>m</mi><mn>2</mn></msub>
+							<mo>~</mo>
+							<mi>U</mi>
+							<mo>(</mo>
+							<mn>0.5</mn>
+							<mo>,</mo>
+							<mn>2.0</mn>
+							<mo>)</mo>
+						</math>
+					</p>
+					<p>
+						and choose radii r<sub>1</sub> ~ U[0.5, 1.0] and r<sub>2</sub> ~ U[1.1, 1.5]. The initial separation is r = r<sub>1</sub> + r<sub>2</sub> (they are on opposite ends with respect to the CoM), and the angle θ is sampled uniformly from [0, 2π). We set the initial radial velocity to zero, giving the bodies' motion perpendicular to the CoM.
+					</p>
+					<p>
+						The angular velocity that would give each of them a circular orbit at t=0 is:
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub>
+								<mover><mi>θ</mi><mo>˙</mo></mover>
+								<mrow><mi>circ</mi></mrow>
+							</msub>
+							<mo>=</mo>
+							<msqrt>
+								<mfrac>
+									<mrow>
+										<mi>G</mi>
+										<mo>(</mo>
+										<msub><mi>m</mi><mn>1</mn></msub>
+										<mo>+</mo>
+										<msub><mi>m</mi><mn>2</mn></msub>
+										<mo>)</mo>
+									</mrow>
+									<msup><mi>r</mi><mn>3</mn></msup>
+								</mfrac>
+							</msqrt>
+						</math>
+					</p>
+					<p>
+						and we scale it by a factor of 0.7. This produces a variety of bound elliptical trajectories.
+					</p>
+					<p>
+						During simulation, we record q = (r, θ), q̇ = (ṙ, θ̇), the Lagrangian L(q, q̇), and its gradients.
+					</p>
+					<p>
+						This procedure yields a diverse dataset of gravitational orbits with broad variation in mass ratios, initial orientations, radii, and eccentricities.
+					</p>
+					<div class="animation-grid">
+						<div class="animation-item">
+							<img src="./two_body_animation/image14.gif" alt="Two-body simulation animation 1"/>
+						</div>
+						<div class="animation-item">
+							<img src="./two_body_animation/image16.gif" alt="Two-body simulation animation 2"/>
+						</div>
+					</div>
+					<p style="text-align: center; font-style: italic; margin-top: 10px;">
+						<b>Figure — Two-Body Simulations:</b> example trajectories generated by the simulator, showing diverse orbital dynamics with varying mass ratios, initial orientations, and eccentricities.
+					</p>
 		    </div>
-		    <div class="margin-right-block" style="transform: translate(0%, -100%);"> <!-- you can move the margin notes up and down with translate -->
-          Interestingly, Plato also asked if X does Y.
+		    <div class="margin-right-block">
 		    </div>
 		</div>
+
 
 		<div class="content-margin-container" id="evaluation">
 				<div class="margin-left-block">
@@ -325,7 +426,7 @@
               Two integration schemes are used: forward Euler, which performs the update in one step using gradients evaluated at the current state (first-order method), and leapfrog, which performs the update in three half-steps. The leapfrog method first does a half-step update on momentum, then recalculates the gradients of the Hamiltonian at the intermediate state, updates position by a half-step, and then does a second half-step update on momentum. It is thus a second-order symplectic scheme.
             </p>
             <p>
-              We also compare against a transformer and a ResNet that consists of a fully connected network with residual connections [cite kaiming]. Both the transformer and the ResNet are trained to directly predict the position and momentum at the next time step based on the current timestep and the trajectory embedding from the codebook (the transformer uses self-attention amongst these). The trajectory embedding z is shared across all timesteps within a trajectory, allowing the models to condition on trajectory-specific properties. For the ResNet, we try 1 or 2 residual blocks to assess the effect of network depth.
+              We also compare against a transformer and a ResNet that consists of a fully connected network with residual connections <a href="#ref_2">[2]</a>. Both the transformer and the ResNet are trained to directly predict the position and momentum at the next time step based on the current timestep and the trajectory embedding from the codebook (the transformer uses self-attention amongst these). The trajectory embedding z is shared across all timesteps within a trajectory, allowing the models to condition on trajectory-specific properties. For the ResNet, we try 1 or 2 residual blocks to assess the effect of network depth.
             </p>
             <p>
               For the DHN, we evaluate three different kernel sizes (2, 4, and 8), setting the stride to half the kernel size in each case.
@@ -425,22 +526,84 @@
               Overall, this qualitative benchmark suggests that DHN produces the most physically consistent long-term trajectories, with the two-layer ResNet performing comparably but visually less stable. While DHN consistently outperforms HNN on this task, its advantage over the ResNet baseline depends on the evaluation metric considered. This highlights the importance of carefully defining evaluation metrics for physics-informed models: quantitative error metrics alone may not fully capture long-term physical plausibility. We discuss more on this challenge and possible directions for improved evaluation in the following section.
             </p>
 
-            <h2>Superresolution</h2>
+            <h2>Super-resolution: Sparse Trajectory Interpolation</h2>
+            <p>
+              So far, our evaluation has focused on forward prediction and long‑horizon energy behavior given dense trajectories. As a complementary test of physical reasoning, we also follow the original DHN work and evaluate the model on a 4× trajectory super‑resolution task, extended here to the two‑body system alongside the single and double pendulum benchmarks.
+            </p>
+            <p>
+              In this setting, each physical system is simulated as a long time series, but only every fourth time step is observed. The model must reconstruct the missing intermediate states, effectively interpolating a dense trajectory from sparse samples. We implement this using the DHN's multi‑stage super‑resolution pipeline: three denoising stages, each operating on overlapping blocks of size (b = 2) with stride (s = 1), yielding an overall 4× increase in temporal resolution. As in our other experiments, a single latent code (z) is optimized per trajectory and shared across all stages.
+            </p>
+            <p>
+              To probe generalization, we evaluate two regimes:
+            </p>
+            <p>
+              <b>Same‑init (in‑distribution).</b> The model is trained and evaluated on the first half of each trajectory. This closely matches the training distribution and mainly tests how well each model can interpolate between familiar states.
+            </p>
+            <p>
+              <b>Diff‑init (out‑of‑distribution).</b> Using the same trained weights and the same number of test‑time optimization steps for (z), we evaluate on the second half of each trajectory, which starts from states not seen during training. This constitutes a mild distribution shift in the initial conditions while keeping the underlying physics fixed.
+            </p>
+            <p>
+              We compare DHN against a 1D CNN super‑resolution baseline that upsamples the sparse inputs via interpolation and convolution, but has no Hamiltonian structure and no latent code optimization. In both cases, we report the mean‑squared error (MSE) on the reconstructed generalized coordinates (q), averaged over test trajectories.
+            </p>
+            <p>
+              The figure below shows the resulting MSE values for all three systems. In the same‑init regime, CNNs perform extremely well on the pendulum systems:
+            </p>
+            <p>
+              <img src="./superres/image12.png" alt="Super-resolution MSE comparison"/>
+            </p>
+            <p style="text-align: center; font-style: italic; margin-top: 10px;">
+              <b>Figure — Super-resolution Performance:</b> Mean-squared error (MSE) comparison between DHN and CNN baseline for single pendulum, double pendulum, and two-body systems, evaluated in both same-init (in-distribution) and diff-init (out-of-distribution) regimes.
+            </p>
+            <p>
+            <ul>
+              <li>Single pendulum: DHN (1.36×10<sup>-3</sup>), CNN (6.0×10<sup>-6</sup>)</li>
+              <li>Double pendulum: DHN (1.03×10<sup>-2</sup>), CNN (1.5×10<sup>-4</sup>)</li>
+            </ul>
+            <p>
+              In this case, the CNN nearly perfectly interpolates between observed points and slightly outperforms DHN on raw error, which is unsurprising given the low dimensionality and smoothness of these trajectories. However, for the two‑body system, DHN achieves a lower error, with an MSE of (8.24×10<sup>-4</sup>) versus (2.95×10<sup>-2</sup>) for the CNN, a reduction of almost two orders of magnitude.
+            </p>
+            <p>
+              The differences become more pronounced in favor of the DHN method in the diff‑init (OOD) regime:
+            </p>
+            <ul>
+              <li>Single pendulum: DHN (1.26×10<sup>-3</sup>), CNN (6.17×10<sup>-3</sup>)</li>
+              <li>Double pendulum: DHN (6.15×10<sup>-2</sup>), CNN (3.52×10<sup>-1</sup>)</li>
+              <li>Two‑body: DHN (9.99×10<sup>-4</sup>), CNN (1.80×10<sup>-1</sup>)</li>
+            </ul>
+            <p>
+              On all three systems, DHN clearly outperforms the CNN baseline, with particularly large margins on the double pendulum and two‑body problems. For the gravitational two‑body system, DHN's OOD error is almost 200× smaller than the CNN's. Notably, DHN's error barely increases when moving from same‑init to diff‑init on two‑body (from (8.24×10<sup>-4</sup>) to (9.99×10<sup>-4</sup>)), whereas the CNN's error jumps by a factor of six.
+            </p>
+            <p>
+              These results reinforce a theme that also appears in our forward‑prediction experiments:
+            </p>
+            <p>
+              <b>1.</b> In simple, in‑distribution settings, standard neural network baselines such as CNNs and ResNets can be highly competitive on short‑horizon MSE.
+            </p>
+            <p>
+              <b>2.</b> Under even modest distribution shifts and more structured dynamics, DHN's Hamiltonian prior, denoising mechanism, and per‑trajectory latent codes yield substantially better robustness. The model does not merely interpolate smooth curves between observed points; it reconstructs trajectories that remain consistent with the underlying conservation laws even when evaluated on new segments of the orbit.
+            </p>
+            <p>
+              From a modeling perspective, super‑resolution thus provides a complementary validation of DHN on the two‑body problem: it shows that the network has learned not only to propagate states forward, but also to infer physically plausible missing states from sparse observations, and to do so in a way that generalizes beyond the specific temporal window used for training.
+            </p>
 		    </div>
 		    <div class="margin-right-block">
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="implications_and_limitations">
+		<div class="content-margin-container" id="conclusion">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-						<h1>Implications and limitations</h1>
-						Let's end with some discussion of the implications and limitations.
+						<h1>Conclusion</h1>
+						<p>
+							[Conclusion content placeholder]
+						</p>
 		    </div>
 		    <div class="margin-right-block">
 		    </div>
 		</div>
+
+
 
 		<div class="content-margin-container" id="citations">
 				<div class="margin-left-block">
@@ -449,11 +612,603 @@
 						<div class='citation' id="references" style="height:auto"><br>
 							<span style="font-size:16px">References:</span><br><br>
 							<a id="ref_1"></a>[1] <a href="https://arxiv.org/abs/2503.07596">Denoising Hamiltonian Network for Physical Reasoning</a>, Congyue Deng, Brandon Y. Feng, Cecilia Garraffo, Alan Garbarz, Robin Walters, William T. Freeman, Leonidas Guibas, Kaiming He, arXiv:2503.07596, 2025<br><br>
+							<a id="ref_2"></a>[2] <a href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a>, Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun, arXiv:1512.03385, 2015<br><br>
 						</div>
 		    </div>
 		    <div class="margin-right-block">
             <!-- margin notes for reference block here -->
 		    </div>
+		</div>
+
+		<div class="content-margin-container" id="appendix">
+			<div class="margin-left-block">
+			</div>
+		<div class="main-content-block">
+					<h1>Appendix</h1>
+
+					<h2>Two-Body Problem</h2>
+					<p>
+						We now study the two-body gravitational problem in the same manner as the single- and double-pendulum systems analyzed in <a href="#ref_1">[1]</a>. First, let us show that it is possible to rewrite the system in terms of center-of-mass (CoM) and relative coordinates, thereby separating the overall motion of the system from the dynamics of the interaction. We then transform the relative coordinate into polar form, define appropriate generalized coordinates and momenta, and derive the final equations of motion.
+					</p>
+					<p>
+						We start by considering two point masses m₁ and m₂ with position vectors <b>r</b>₁ and <b>r</b>₂ and mutual potential V(r) where r = ||<b>r</b>₁ - <b>r</b>₂||. The Lagrangian is
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>L</mi>
+							<mo>=</mo>
+							<mfrac><mn>1</mn><mn>2</mn></mfrac>
+							<msub><mi>m</mi><mn>1</mn></msub>
+							<msup><mover><msub><mi>r</mi><mn>1</mn></msub><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>+</mo>
+							<mfrac><mn>1</mn><mn>2</mn></mfrac>
+							<msub><mi>m</mi><mn>2</mn></msub>
+							<msup><mover><msub><mi>r</mi><mn>2</mn></msub><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mi>V</mi><mo>(</mo><mi>r</mi><mo>)</mo>
+						</math>
+					</p>
+
+					<h3>Center-of-Mass and Relative Coordinates</h3>
+					<p>
+						We can define the center-of-mass (CoM) coordinate as
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>R</mi>
+							<mo>=</mo>
+							<mfrac>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<msub><mi>r</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+									<msub><mi>r</mi><mn>2</mn></msub>
+								</mrow>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+						</math>
+					</p>
+					<p>
+						and the relative coordinate
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>r</mi>
+							<mo>=</mo>
+							<msub><mi>r</mi><mn>1</mn></msub>
+							<mo>-</mo>
+							<msub><mi>r</mi><mn>2</mn></msub>
+						</math>
+					</p>
+					<p>
+						Inverting these relations:
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>r</mi><mn>1</mn></msub>
+							<mo>=</mo>
+							<mi>R</mi>
+							<mo>+</mo>
+							<mfrac>
+								<msub><mi>m</mi><mn>2</mn></msub>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+							<mi>r</mi>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>r</mi><mn>2</mn></msub>
+							<mo>=</mo>
+							<mi>R</mi>
+							<mo>-</mo>
+							<mfrac>
+								<msub><mi>m</mi><mn>1</mn></msub>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+							<mi>r</mi>
+						</math>
+					</p>
+					<p>
+						Taking time derivatives:
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><msub><mi>r</mi><mn>1</mn></msub><mo>˙</mo></mover>
+							<mo>=</mo>
+							<mover><mi>R</mi><mo>˙</mo></mover>
+							<mo>+</mo>
+							<mfrac>
+								<msub><mi>m</mi><mn>2</mn></msub>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><msub><mi>r</mi><mn>2</mn></msub><mo>˙</mo></mover>
+							<mo>=</mo>
+							<mover><mi>R</mi><mo>˙</mo></mover>
+							<mo>-</mo>
+							<mfrac>
+								<msub><mi>m</mi><mn>1</mn></msub>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+						</math>
+					</p>
+					<p>
+						Substituting into L, one obtains
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>L</mi>
+							<mo>=</mo>
+							<mfrac><mn>1</mn><mn>2</mn></mfrac>
+							<mo>(</mo>
+							<msub><mi>m</mi><mn>1</mn></msub>
+							<mo>+</mo>
+							<msub><mi>m</mi><mn>2</mn></msub>
+							<mo>)</mo>
+							<msup><mover><mi>R</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>+</mo>
+							<mfrac><mn>1</mn><mn>2</mn></mfrac>
+							<mi>μ</mi>
+							<msup><mover><mi>r</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mi>V</mi><mo>(</mo><mi>r</mi><mo>)</mo>
+						</math>
+					</p>
+					<p>
+						where μ is the <b>reduced mass</b>
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>μ</mi>
+							<mo>=</mo>
+							<mfrac>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+							</mfrac>
+						</math>
+					</p>
+
+					<h3>Reference Frame of the Center of Mass</h3>
+					<p>
+						In the CoM frame,
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>R</mi><mo>˙</mo></mover>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+					</p>
+					<p>
+						so the Lagrangian reduces to
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>L</mi>
+							<mo>=</mo>
+							<mfrac><mn>1</mn><mn>2</mn></mfrac>
+							<mi>μ</mi>
+							<msup><mover><mi>r</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mi>V</mi><mo>(</mo><mi>r</mi><mo>)</mo>
+						</math>
+					</p>
+					<p>
+						For gravitational interactions,
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>V</mi><mo>(</mo><mi>r</mi><mo>)</mo>
+							<mo>=</mo>
+							<mo>-</mo>
+							<mfrac>
+								<mrow>
+									<mi>G</mi>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+								<mi>r</mi>
+							</mfrac>
+						</math>
+					</p>
+
+					<h3>Polar Coordinates</h3>
+					<p>
+						Let the relative coordinate be expressed in planar polar form
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>r</mi>
+							<mo>=</mo>
+							<mo>(</mo>
+							<mi>r</mi>
+							<mo>,</mo>
+							<mi>θ</mi>
+							<mo>)</mo>
+						</math>
+					</p>
+					<p>
+						where r is the radial separation and θ is the polar angle. The kinetic energy becomes
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msup><mover><mi>r</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>=</mo>
+							<msup><mover><mi>r</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>+</mo>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+						</math>
+					</p>
+					<p>
+						so the Lagrangian takes the form
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>L</mi>
+							<mo>=</mo>
+							<mfrac><mi>μ</mi><mn>2</mn></mfrac>
+							<mo>(</mo>
+							<msup><mover><mi>r</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>+</mo>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>)</mo>
+							<mo>-</mo>
+							<mi>V</mi><mo>(</mo><mi>r</mi><mo>)</mo>
+						</math>
+					</p>
+					<p>
+						Thus, our generalized coordinates for the reduced two-body problem are
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>q</mi>
+							<mo>=</mo>
+							<mo>(</mo>
+							<mi>r</mi>
+							<mo>,</mo>
+							<mi>θ</mi>
+							<mo>)</mo>
+						</math>
+					</p>
+
+					<h3>Generalized Momenta</h3>
+					<p>
+						From the Lagrangian
+					</p>
+					<p style="text-align: center;">
+						L = (μ/2)(ṙ² + r²θ̇²) - V(r),
+					</p>
+					<p>
+						the generalized momenta conjugate to r and θ are
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>p</mi><mi>r</mi></msub>
+							<mo>=</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>r</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>p</mi><mi>θ</mi></msub>
+							<mo>=</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>θ</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<mover><mi>θ</mi><mo>˙</mo></mover>
+						</math>
+					</p>
+					<p>
+						The angular momentum p<sub>θ</sub> is conserved because θ does not appear explicitly in L:
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mi>θ</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mn>0</mn>
+							<mo>⇒</mo>
+							<mover><msub><mi>p</mi><mi>θ</mi></msub><mo>˙</mo></mover>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+					</p>
+					<p>
+						Thus,
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<msub><mi>p</mi><mi>θ</mi></msub>
+							<mo>=</mo>
+							<mi>ℓ</mi>
+							<mo>=</mo>
+							<mi>constant</mi>
+						</math>
+					</p>
+					<p>
+						where ℓ is the total angular momentum of the reduced system.
+					</p>
+					<p>
+						Thus the angular velocity satisfies
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>θ</mi><mo>˙</mo></mover>
+							<mo>=</mo>
+							<mfrac>
+								<mi>ℓ</mi>
+								<mrow>
+									<mi>μ</mi>
+									<msup><mi>r</mi><mn>2</mn></msup>
+								</mrow>
+							</mfrac>
+						</math>
+					</p>
+
+					<h3>Euler–Lagrange Equations</h3>
+					<p>
+						Let us evaluate the derivatives of the Lagrangian with respect to the generalized coordinates.
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mi>r</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mfrac>
+								<mrow><mi>d</mi><mi>V</mi></mrow>
+								<mrow><mi>d</mi><mi>r</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mi>G</mi>
+							<mfrac>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+								<msup><mi>r</mi><mn>2</mn></msup>
+							</mfrac>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>r</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mi>θ</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>θ</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<mover><mi>θ</mi><mo>˙</mo></mover>
+						</math>
+					</p>
+					<p>
+						Now, we can evaluate the Euler-Lagrange equations to get the equations of motion of the system.
+					</p>
+
+					<p><b>Angular equation.</b></p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac>
+							<mo>(</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>θ</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>)</mo>
+							<mo>=</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mi>θ</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+					</p>
+					<p>
+						Thus the angular equation of motion is:
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac>
+							<mo>(</mo>
+							<mi>μ</mi>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<mover><mi>θ</mi><mo>˙</mo></mover>
+							<mo>)</mo>
+							<mo>=</mo>
+							<mn>2</mn>
+							<mi>μ</mi>
+							<mi>r</mi>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+							<mover><mi>θ</mi><mo>˙</mo></mover>
+							<mo>+</mo>
+							<mi>μ</mi>
+							<msup><mi>r</mi><mn>2</mn></msup>
+							<mover><mi>θ</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+						<br>
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>θ</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mo>-</mo>
+							<mfrac>
+								<mrow>
+									<mn>2</mn>
+									<mover><mi>r</mi><mo>˙</mo></mover>
+									<mover><mi>θ</mi><mo>˙</mo></mover>
+								</mrow>
+								<mi>r</mi>
+							</mfrac>
+						</math>
+					</p>
+
+					<p><b>Radial equation.</b></p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac>
+							<mo>(</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mover><mi>r</mi><mo>˙</mo></mover></mrow>
+							</mfrac>
+							<mo>)</mo>
+							<mo>-</mo>
+							<mfrac>
+								<mrow><mo>∂</mo><mi>L</mi></mrow>
+								<mrow><mo>∂</mo><mi>r</mi></mrow>
+							</mfrac>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mfrac><mi>d</mi><mrow><mi>d</mi><mi>t</mi></mrow></mfrac>
+							<mo>(</mo>
+							<mi>μ</mi>
+							<mover><mi>r</mi><mo>˙</mo></mover>
+							<mo>)</mo>
+							<mo>-</mo>
+							<mo>(</mo>
+							<mi>μ</mi>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mfrac>
+								<mrow><mi>d</mi><mi>V</mi></mrow>
+								<mrow><mi>d</mi><mi>r</mi></mrow>
+							</mfrac>
+							<mo>)</mo>
+							<mo>=</mo>
+							<mn>0</mn>
+						</math>
+					</p>
+					<p>
+						Thus the radial equation of motion is
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>μ</mi>
+							<mover><mi>r</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mi>μ</mi>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mi>G</mi>
+							<mfrac>
+								<mrow>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<msub><mi>m</mi><mn>2</mn></msub>
+								</mrow>
+								<msup><mi>r</mi><mn>2</mn></msup>
+							</mfrac>
+						</math>
+					</p>
+					<p>
+						So
+					</p>
+					<p style="text-align: center;">
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mover><mi>r</mi><mo>¨</mo></mover>
+							<mo>=</mo>
+							<mi>r</mi>
+							<msup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup>
+							<mo>-</mo>
+							<mfrac>
+								<mrow>
+									<mi>G</mi>
+									<mo>(</mo>
+									<msub><mi>m</mi><mn>1</mn></msub>
+									<mo>+</mo>
+									<msub><mi>m</mi><mn>2</mn></msub>
+									<mo>)</mo>
+								</mrow>
+								<msup><mi>r</mi><mn>2</mn></msup>
+							</mfrac>
+						</math>
+					</p>
+					<p>
+						where we've used the definition of reduced mass to simplify the final equation.
+					</p>
+		</div>
+		<div class="margin-right-block">
+		</div>
 		</div>
 
 	</body>
