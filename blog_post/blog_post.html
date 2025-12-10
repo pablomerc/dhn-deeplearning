@@ -20,7 +20,7 @@
 		display: flex;
 		width: 100%; /* Ensure the container is full width */
 		justify-content: left; /* Horizontally centers the children in the container */
-		align-items: center;  /* Vertically centers the children in the container */
+		align-items: flex-start;  /* Align items at the top to prevent background splitting */
 	}
 	.main-content-block {
 		width: 70%; /* Change this percentage as needed */
@@ -251,8 +251,9 @@
               <b style="font-size:16px">Outline</b><br><br>
               <a href="#intro">Introduction</a><br><br>
               <a href="#background">Background</a><br><br>
-              <a href="#training">Training</a><br><br>
-              <a href="#evaluation">Evaluation</a><br><br>
+              <a href="#methods">Methods</a><br><br>
+              <a href="#results">Results</a><br><br>
+              <a href="#future-work">Future Work</a><br><br>
               <a href="#conclusion">Conclusion</a><br><br>
               <a href="#appendix">Appendix</a><br><br>
           </div>
@@ -421,11 +422,11 @@
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="training">
+		<div class="content-margin-container" id="methods">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-						<h1>Training</h1>
+						<h1>Methods</h1>
 
 					<h2>Data Preparation</h2>
 
@@ -435,7 +436,19 @@
 
 					<h2>Architecture</h2>
 					<p>
-						[Content about the model architecture - transformer structure, denoising mechanism, latent codes, etc.]
+						Our model follows the Denoising Hamiltonian Network (DHN) design introduced by Deng et al. <a href="#ref_1">[1]</a>, which showed strong performance compared to CNN, ResNet, and HNN baselines on pendulum systems. We adopt their two main components: a block-wise decoder-only Transformer and a per-trajectory latent codebook.
+					</p>
+					<p>
+						The input to the network is a short temporal block of generalized coordinates and momenta,
+						<math xmlns="http://www.w3.org/1998/Math/MathML">
+							<mi>Q</mi>
+							<mo>∈</mo>
+							<msup><mi>ℝ</mi><mrow><mi>B</mi><mo>×</mo><mn>1</mn><mo>×</mo><mi>L</mi><mo>×</mo><msub><mi>d</mi><mi>q</mi></msub></mrow></msup>
+						</math>
+						, where <em>B</em> is the batch size, the singleton dimension indexes a single block, <em>L = b + s</em> is the block length (block size plus stride), and <em>d<sub>q</sub></em> is the dimensionality of the generalized coordinates.
+					</p>
+					<p>
+						Each time step in the block is treated as a token whose feature vector concatenates embeddings of position and momentum, a learned noise-level embedding, a positional encoding, and a global latent code <em>z</em> for that trajectory. A multi-head Transformer applies self-attention over all tokens, using <em>z</em> as a shared conditioning signal. The Transformer outputs block-wise discrete Hamiltonian operators, which are then used to update positions and momenta in a way that is consistent with physics, while denoising the noisy entries.
 					</p>
 
 					<h2>Training Objective</h2>
@@ -554,11 +567,11 @@
 		    </div>
 		</div>
 
-		<div class="content-margin-container" id="evaluation">
+		<div class="content-margin-container" id="results">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-            <h1>Evaluation</h1>
+            <h1>Results</h1>
 
             <h2>Trajectory Completion:</h2>
             <p>
@@ -735,13 +748,46 @@
 		    </div>
 		</div>
 
+		<div class="content-margin-container" id="future-work">
+			<div class="margin-left-block">
+			</div>
+		<div class="main-content-block">
+					<h1>Future Work</h1>
+					<p>
+						Future research may extend this framework to increasingly complex and chaotic dynamical regimes. As a natural extension of this work, the three-body problem serves as a good candidate for evaluating the performance of this model. Its extreme sensitivity to initial conditions causes classical numerical integration to significantly diverge from the true solution, as the numerical error compounds with each step. The denoising mechanism of the DHN could potentially minimize this problem, motivating our attempt to construct a similar DHN model for the three-body problem. We learned that creating a meaningful trajectory dataset for the neural network for this problem is challenging. The solutions are very sensitive to initial conditions, and most of the trajectories we generated under a constraint of a fixed number of time steps involve a short, complicated interaction between the three bodies in the initial part of the simulation, shortly followed by an ejection of one of the bodies away from the other two bodies that end up orbiting one another, as shown in the figure below.
+					</p>
+					<p>
+						<img src="./three_body_animation/video_4.gif" alt="Three-body problem animation" style="max-width: 60%; height: auto;"/>
+					</p>
+					<p style="text-align: center; font-style: italic; margin-top: 10px;">
+						<b>Figure — Three-Body Problem:</b> Animation of a simulated three-body problem trajectory showing a short interaction between the three bodies followed by an ejection of one of the bodies.
+					</p>
+					<p>
+						This means that a large fraction of the trajectories initialized randomly are one body moving with approximately constant velocity for most of the trajectory, while the other two have a two-body interaction, which does not constitute a meaningful dataset that could let the neural network learn the complex dynamics of three-body interactions. This problem could be addressed by a careful curation of the trajectory dataset, perhaps involving a condition that would filter trajectories through a condition on the fractional change of velocity of each body, which would indicate stagnation in the system evolution. Even then, the training set would also need to include enough examples of "ejection" for the neural network to correctly recognize such events, which, again, could be achieved by identifying trajectories that decay into stagnation around the end of the simulation to capture the details of the sequence of motions that lead to ejection.
+					</p>
+					<p>
+						Another issue we found is that the fact that distances are unbounded makes this system hard to study for neural networks, unlike the double pendulum in <a href="#ref_1">[1]</a>, which despite being chaotic has coordinates that are bound.
+					</p>
+		</div>
+		<div class="margin-right-block">
+		</div>
+	</div>
+
+
+
 		<div class="content-margin-container" id="conclusion">
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
 						<h1>Conclusion</h1>
 						<p>
-							[Conclusion content placeholder]
+							In this project, we adapted the Denoising Hamiltonian Network (DHN) to the gravitational two-body problem and evaluated it on long-horizon prediction and super-resolution, comparing against HNN, Transformer, ResNet, and CNN baselines. Across our experiments, DHN consistently outperformed a standard HNN in both trajectory accuracy and energy conservation. ResNets occasionally matched or slightly exceeded DHN in raw error on the two-body task, but DHN showed clear advantages in maintaining physically plausible trajectories and stable energies over long rollouts when we animated the predictions. In the super-resolution setting, especially under mild distribution shift, DHN significantly outperformed a CNN baseline, indicating that it learns more than smooth interpolation.
+						</p>
+						<p>
+							A second takeaway is methodological: we observed that conventional training/validation loss is a poor proxy for physical quality in this setting. Models with similar short-horizon loss can behave very differently in terms of long-term energy drift and qualitative trajectory stability, underscoring the need for evaluation metrics that explicitly target physical consistency. This experiment demonstrates a gap in current evaluation practices and motivates the development of new metrics to quantify physical reasoning.
+						</p>
+						<p>
+							Overall, our results suggest that DHN is a promising architecture for physics-informed learning on dynamical systems beyond the original pendulum benchmarks. The implementation of the codebook has consistently shown to preserve information about the system-specific physical parameters for single pendulum, double pendulum, and a two-body problem, offering a potential route toward architectures capable of preserving the laws of motion in more general systems, such as generative video models. Current models commonly violate Newtonian dynamics, creating videos that show physically impossible behavior. For instance, skateboards in generated videos spontaneously accelerate on horizontal surfaces, with no force applied, because most of the skateboards in the training set are already in motion. This could be overcome by integrating conservation laws directly into noise-conditioned generative models, similarly to the model architecture adopted in this work.
 						</p>
 		    </div>
 		    <div class="margin-right-block">
