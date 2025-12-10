@@ -361,7 +361,7 @@
 						</math>
 					</p>
 					<p>
-						using scipy.solve_ivp. By default, this uses an adaptive Runge–Kutta integrator (Dormand–Prince 4(5)), which provides accurate solutions with automatic step-size control.
+						we use an adaptive Runge–Kutta integrator (Dormand–Prince 4(5)), which provides accurate solutions with automatic step-size control.
 					</p>
 					<p>
 						For each simulation, we sample the masses as
@@ -381,7 +381,7 @@
 						</math>
 					</p>
 					<p>
-						and choose radii r<sub>1</sub> ~ U(0.5, 1.0) and r<sub>2</sub> ~ U(1.1, 1.5). The initial separation is r = r<sub>1</sub> + r<sub>2</sub> (they are on opposite ends with respect to the CoM), and the angle θ is sampled uniformly from [0, 2π). We set the initial radial velocity to zero, giving the bodies' motion perpendicular to the CoM.
+						and choose radii r<sub>1</sub> ~ U(0.5, 1.0) and r<sub>2</sub> ~ U(1.1, 1.5). The initial separation is r = r<sub>1</sub> + r<sub>2</sub> (they are on opposite ends with respect to the CoM), and the angle θ ~ U[0, 2π). We set the initial radial velocity to zero, giving the bodies' motion perpendicular to the CoM.
 					</p>
 					<p>
 						The angular velocity that would give each of them a circular orbit at t=0 is:
@@ -440,7 +440,6 @@
 		    <div class="margin-right-block">
 		    </div>
 		</div>
-
 		<div class="content-margin-container">
 				<div class="margin-left-block">
 				</div>
@@ -449,7 +448,7 @@
 						Our model follows the Denoising Hamiltonian Network (DHN) design introduced by Deng et al. <a href="#ref_1">[1]</a>, which showed strong performance compared to CNN, ResNet, and HNN baselines on pendulum systems. We adopt their two main components: a block-wise decoder-only Transformer and a per-trajectory latent codebook.
 					</p>
 					<p>
-						Each time step in the block is treated as a token whose feature vector concatenates embeddings of position and momentum, a learned noise-level embedding, a positional encoding, and a global latent code <em>z</em> for that trajectory. A multi-head Transformer applies self-attention over all tokens, using <em>z</em> as a shared conditioning signal. The Transformer outputs block-wise discrete Hamiltonian operators, which are then used to update positions and momenta in a way that is consistent with physics, while denoising the noisy entries. Further details on the training objective and configuration are provided in the <a href="#appendix-training">appendix</a>.
+						Each time step in the block is treated as a token whose feature vector combines embeddings of position and momentum, a learned noise-level embedding, a positional encoding, and a global latent code <em>z</em> for that trajectory. A multi-head Transformer applies self-attention over all tokens, using <em>z</em> as a shared conditioning signal. The Transformer outputs block-wise discrete Hamiltonian operators, which are then used to update positions and momenta in a way that is consistent with physics, while denoising the noisy entries. Further details on the training objective and configuration are provided in the <a href="#appendix-training">appendix</a>.
 					</p>
 		    </div>
 		    <div class="margin-right-block">
@@ -474,7 +473,11 @@
               We compare the performance of the Denoising Hamiltonian Network (DHN) model against a few baselines, following <a href="#ref_1">[1]</a>.
             </p>
             <p>
-              The first baseline is a traditional Hamiltonian neural network. This baseline uses a single network that predicts the Hamiltonian H_θ and calculates the next step from the current state using the gradients of the Hamiltonian. This baseline has only one loss term, based on the error in the predicted position and momentum (as opposed to the DHN, which has that term plus a denoising term).
+              The first baseline is a traditional Hamiltonian neural network. This baseline uses a single network that predicts the Hamiltonian
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <msub><mi>H</mi><mi>θ</mi></msub>
+              </math>
+              and calculates the next step from the current state using the gradients of the Hamiltonian. This baseline has only one loss term, based on the error in the predicted position and momentum.
             </p>
             <p>
               Two integration schemes are used: forward Euler, which performs the update in one step using gradients evaluated at the current state (first-order method), and leapfrog, which performs the update in three half-steps. The leapfrog method first does a half-step update on momentum, then recalculates the gradients of the Hamiltonian at the intermediate state, updates position by a half-step, and then does a second half-step update on momentum. It is thus a second-order symplectic scheme.
@@ -498,10 +501,7 @@
               We see that the DHN method outperforms the traditional HNN method for the two body problem. We find a kernel size of 2 and a stride of 1 to be the most optimal. Surprisingly, this simplest approach yields the best results. Since kernel size 2 and stride 1 seems to be the most promising, we try training for longer, for a total of 400 epochs. We look at the training loss curves to investigate this issue. Extending training to 400 epochs does not seem to further improve performance. The training loss remains approximately constant after epoch 200 and exhibits a transient spike near epoch 300, after which training recovers. However, neither the distance nor angle error improves with longer training, suggesting diminishing returns beyond 200 epochs for this configuration.
             </p>
             <p>
-              We do not report a conventional validation loss because it is not informative for our setting.
-            </p>
-            <p>
-              During training, DHN is optimized using block-wise denoising and motion updates over short temporal windows, whereas at test time the model is evaluated through long-horizon autoregressive rollout after optimizing a per-trajectory latent code. In this regime, short-horizon prediction error is a poor proxy for downstream performance: models with similar training loss can exhibit dramatically different long-term behavior due to error accumulation and energy drift. Consequently, validation loss computed under the training objective does not reliably correlate with the metrics of interest.
+              We do not report a conventional validation loss because it is not informative for our setting. During training, DHN is optimized using block-wise denoising and motion updates over short temporal windows, whereas at test time the model is evaluated through long-horizon autoregressive rollout after optimizing a per-trajectory latent code. In this regime, short-horizon prediction error is a poor proxy for downstream performance: models with similar training loss can exhibit dramatically different long-term behavior due to error accumulation and energy drift. Consequently, validation loss computed under the training objective does not reliably correlate with the metrics of interest.
             </p>
             <p>
               <img src="./AR_figures/loss.png" alt="Training loss curves"/>
@@ -577,7 +577,7 @@
               From this visual inspection, DHN produces trajectories that appear smooth, stable, and consistent with the expected orbital dynamics, whereas HNN predictions exhibit noticeable drift and distortion over long time scales. Among the ResNet baselines, the two-layer ResNet produces more coherent trajectories than the single-layer variant.
             </p>
             <p>
-              Overall, this qualitative benchmark suggests that DHN produces the most physically consistent long-term trajectories, with the two-layer ResNet performing comparably but visually less stable. While DHN consistently outperforms HNN on this task, its advantage over the ResNet baseline depends on the evaluation metric considered. This highlights the importance of carefully defining evaluation metrics for physics-informed models: quantitative error metrics alone may not fully capture long-term physical plausibility. We discuss more on this challenge and possible directions for improved evaluation in the following section.
+              Overall, this qualitative benchmark suggests that DHN produces the most physically consistent long-term trajectories, with the two-layer ResNet performing comparably but visually less stable. While DHN consistently outperforms HNN on this task, its advantage over the ResNet baseline depends on the evaluation metric considered. This highlights the importance of carefully defining evaluation metrics for physics-informed models: quantitative error metrics alone may not fully capture long-term physical plausibility.
             </p>
 
             <h2>Super-resolution: Sparse Trajectory Interpolation</h2>
@@ -597,7 +597,7 @@
               <b>Diff‑init (out‑of‑distribution).</b> Using the same trained weights and the same number of test‑time optimization steps for (z), we evaluate on the second half of each trajectory, which starts from states not seen during training. This constitutes a mild distribution shift in the initial conditions while keeping the underlying physics fixed.
             </p>
             <p>
-              We compare DHN against a 1D CNN super‑resolution baseline that upsamples the sparse inputs via interpolation and convolution, but has no Hamiltonian structure and no latent code optimization. In both cases, we report the mean‑squared error (MSE) on the reconstructed generalized coordinates (q), averaged over test trajectories.
+              We compare DHN against a 1D CNN super‑resolution baseline that upsamples the sparse inputs via interpolation and convolution, but has no Hamiltonian structure and no latent code optimization. In both cases, we report the mean‑squared error (MSE) on the reconstructed generalized coordinates, averaged over test trajectories.
             </p>
             <p>
               The figure below shows the resulting MSE values for all three systems. In the same‑init regime, CNNs perform extremely well on the pendulum systems:
